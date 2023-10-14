@@ -167,3 +167,30 @@ numAccounts = len(accounts_info) #set to the number of accounts imported
 #at this point all of the relevant data has been retrieved to begin querying data,
 #so now it's time to begin extracting actual data from the user's account!
 #-------------------------------------------------------------------------------
+
+def getAllCustomerTransactions():
+    url = 'https://api.finicity.com/aggregation/v3/customers/{{customerId}}/transactions'
+
+    headers = {
+        'Finicity-App-Key': '{{appKey}}',
+        'Accept': 'application/json',
+        'Finicity-App-Token': '{{appToken}}'
+    }
+
+    params = {
+        'fromDate': '{{fromDate}}',
+        'toDate': '{{toDate}}',
+        'includePending': 'true',
+        'sort': 'desc',
+        'limit': '25'
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        # Request was successful, and you can work with the response here
+        data = response.json()
+        print(data)
+    else:
+        print(f"Request failed with status code {response.status_code}")
+        print(response.text)

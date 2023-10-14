@@ -111,19 +111,30 @@ def get_finicity_accounts(api_token, api_key, customer_id):
         return None
 
 
-#combine all into one step
-#generate_finicity_token(api_token, api_key, partner_id, customer_id):
-
-def generate_sample_customer(key, id, secret, url, username):
+def generate_sample_customer(key, id,  secret, url, username):
     token = getToken(key, secret, id, url)
     customer_data = create_finicity_customer(key, token['token'], username)
+    customer_id = customer_data['id']
 
-    link_json = generate_finicity_token(token['token'], key, id, customer_data['id'])
+    link_json = generate_finicity_token(token['token'], key, id, customer_id)
     link = link_json['link']
 
-    return link
+    
+    results_dictionary = {
+        'token': token,
+        'link': link,
+        'customer_id': customer_id
+    }
 
+    print(results_dictionary)
+    return results_dictionary
 
+#def get_finicity_accounts(api_token, api_key, customer_id):
+def get_transaction_data(token, key, customer_id):
+    
+    account_details = get_finicity_accounts(token, key, customer_id)
+    print(account_details)
     
 
-generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer26_2023-10-14')
+generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer29_2023-10-14')
+

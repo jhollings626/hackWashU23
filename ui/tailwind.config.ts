@@ -9,12 +9,12 @@ export default {
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
+        primary: "#41D3BD",
+        secondary: "#26547C",
+        highlight: "#EF476F",
+        highlight2: "#FFD166",
+        white: "#FFFFFF",
+        muted: "#F1FAEE",
       },
     },
   },

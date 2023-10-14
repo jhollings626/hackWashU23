@@ -1,0 +1,10 @@
+:root {
+  --g1: #f5f5f5;
+  --g2: #e0e0e0;
+  --g3: #bdbdbd;
+}
+
+.node-label {
+  text-align: center!important;
+  color: white!important;
+}

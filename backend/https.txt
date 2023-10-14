@@ -1,0 +1,10 @@
+'344fcb27caa92be8e7b7c26b5d230022'
+
+curl --location --request POST 'https://api.finicity.com/aggregation/v2/customers/testing' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--header 'Finicity-App-Key: 344fcb27caa92be8e7b7c26b5d230022' \
+--header 'Finicity-App-Token: r0r0GUoGHS8nHl5e6nki' \
+--data-raw '{
+    "username": "customer4_2023-10-14"
+}'

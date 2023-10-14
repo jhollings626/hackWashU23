@@ -129,12 +129,14 @@ def generate_sample_customer(key, id,  secret, url, username):
     print(results_dictionary)
     return results_dictionary
 
-#def get_finicity_accounts(api_token, api_key, customer_id):
+
 def get_transaction_data(token, key, customer_id):
-    
     account_details = get_finicity_accounts(token, key, customer_id)
     print(account_details)
     
 
-generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer29_2023-10-14')
+customer_info = generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer31_2023-10-14')
 
+token = customer_info['token']
+link = customer_info['link']
+customer_id = customer_info['customer_id']

@@ -118,13 +118,12 @@ def generate_sample_customer(key, id, secret, url, username):
     token = getToken(key, secret, id, url)
     customer_data = create_finicity_customer(key, token['token'], username)
 
-    print(token['token'])
-    print(key)
-    print(id)
-    print(customer_data['id'])
+    link_json = generate_finicity_token(token['token'], key, id, customer_data['id'])
+    link = link_json['link']
 
-    link = generate_finicity_token(token['token'], key, id, customer_data['id'])
-    print(link)
+    return link
+
+
     
 
-generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer25_2023-10-14')
+generate_sample_customer(API_KEY, partnerId, partnerSecret, url, 'customer26_2023-10-14')

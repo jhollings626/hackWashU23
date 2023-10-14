@@ -130,8 +130,7 @@ def generate_sample_customer(key, id,  secret, url, username):
     print(results_dictionary)
     return results_dictionary
 
-    
-customerInt = (random.randint(50,100) * random.randint(25,100) + random.randint(0,500)) * random.randint(1,5) #randomize customer id generation b/c all have to be unique
+customerInt = (random.randint(50,100) * random.randint(25,100) + random.randint(0,500)) * random.randint(1,20) #randomize customer id generation b/c all have to be unique
 customer_user = 'customer' + str(customerInt) + "_2023-10-14"
 print("customer ID: " + customer_user)
 
@@ -144,4 +143,27 @@ link = customer_info['link']
 customer_id = customer_info['customer_id']
 
 accounts_data = get_finicity_accounts(token,API_KEY,customer_id) #return json containing raw data for user-selected accounts
-print(accounts_data)
+#print(accounts_data) #print full account data json
+
+account_ids = [account['id'] for account in accounts_data['accounts']] #retrieve account ids from da JSON
+account_names = [account['name'] for account in accounts_data['accounts']]
+balances = [account['balance'] for account in accounts_data['accounts']]
+oldestTransactions = [account['oldestTransactionDate'] for account in accounts_data['accounts']]
+lastTransactions = [account['lastTransactionDate'] for account in accounts_data['accounts']]
+
+accounts_info = [ #craete accounts_info, list of dictionaries for each account's important data
+    {
+        'account_id': account['id'],
+        'account_name': account['name'],
+        'balance': account['balance'],
+        'oldest_transaction': account['oldestTransactionDate'],
+        'last_transaction': account['lastTransactionDate']
+    }
+    for account in accounts_data['accounts']
+]
+
+numAccounts = len(accounts_info) #set to the number of accounts imported
+#-------------------------------------------------------------------------
+#at this point all of the relevant data has been retrieved to begin querying data,
+#so now it's time to begin extracting actual data from the user's account!
+#-------------------------------------------------------------------------------

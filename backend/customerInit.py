@@ -1,8 +1,8 @@
 # functions for creating sameple customer, still need to make on function to do all of this, I might put it all in a class. 
 import requests
 import os
-from dotenv import load_dotenv
 import random
+from dotenv import load_dotenv
 load_dotenv("key.env")
 
 API_KEY = os.getenv("API_KEY")
@@ -91,6 +91,29 @@ def generate_finicity_token(api_token, api_key, partner_id, customer_id):
         print(f'Error: Unable to generate token. Status code: {response.status_code}')
         return None
 
+#combine all into one step
+#generate_finicity_token(api_token, api_key, partner_id, customer_id):
+
+def generate_sample_customer(key, id, secret, url, username):
+    token = getToken(key, secret, id, url)
+    customer_data = create_finicity_customer(key, token['token'], username)
+
+    link_json = generate_finicity_token(token['token'], key, id, customer_data['id'])
+    link = link_json['link']
+
+    return link
+
+def get_account_ids(API_KEY,customer_id):
+    url = f'https://api.finicity.com/aggregation/v1/customers/{customer_id}/accounts/simple'
+
+    headers = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': f'application/json',
+        'Accept': 'application/json'
+    }
+
+    response = requests.get(url,headers=headers,json={})
+
 #refresh - necessary to start pulling customer data
 def get_finicity_accounts(api_token, api_key, customer_id):
     url = f'https://api.finicity.com/aggregation/v1/customers/{customer_id}/accounts'
@@ -112,36 +135,14 @@ def get_finicity_accounts(api_token, api_key, customer_id):
         return None
 
 
-def generate_sample_customer(key, id,  secret, url, username):
-    token = getToken(key, secret, id, url)
-    customer_data = create_finicity_customer(key, token['token'], username)
-    customer_id = customer_data['id']
 
-    link_json = generate_finicity_token(token['token'], key, id, customer_id)
-    link = link_json['link']
 
-    
-    results_dictionary = {
-        'token': token['token'], #this is pretty complicated
-        'link': link,
-        'customer_id': customer_id
-    }
-
-    print(results_dictionary)
-    return results_dictionary
-
-    
 customerInt = (random.randint(50,100) * random.randint(25,100) + random.randint(0,500)) * random.randint(1,5) #randomize customer id generation b/c all have to be unique
-customer_user = 'customer' + str(customerInt) + "_2023-10-14"
-print("customer ID: " + customer_user)
+customerID = 'customer' + str(customerInt) + "_2023-10-14"
+print("customer ID: " + customerID)
 
-customer_info = generate_sample_customer(API_KEY, partnerId, partnerSecret, url, customer_user)
+link = generate_sample_customer(API_KEY, partnerId, partnerSecret, url, customerID) #generate unique customer link
+print(link)
+tempCheck = input('continue? ') #basic way to wait for user to login without performing check in pop-up yet
 
-tempDelay = input('continue?')
-
-token = customer_info['token']
-link = customer_info['link']
-customer_id = customer_info['customer_id']
-
-accounts_data = get_finicity_accounts(token,API_KEY,customer_id) #return json containing raw data for user-selected accounts
-print(accounts_data)
+get_finicity_accounts(API_KEY,customerID)

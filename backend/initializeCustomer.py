@@ -3,7 +3,13 @@ import requests
 import os
 from dotenv import load_dotenv
 import random
+import openai
+
 load_dotenv("key.env")
+
+load_dotenv("openAI_key.env")
+openai.api_key = os.getenv("OPENAI_API_KEY") #pass openai key to the API
+
 
 API_KEY = os.getenv("API_KEY")
 print(API_KEY)
@@ -12,6 +18,7 @@ print(API_KEY)
 url = 'https://api.finicity.com/aggregation/v2/partners/authentication'
 partnerId = "2445584332755"
 partnerSecret = "Hh4x0opoX0xfvN4oJ15y"
+
 
 #generate token
 def getToken(key, secret, id, url):
@@ -151,7 +158,7 @@ def getAllCustomerTransactions(API_key, customer_id, token, fromDate, toDate):
     if response.status_code == 200: #poll HTTP to verify successful request
         # Request was successful, and you can work with the response here
         data = response.json()
-        print(data)
+        #print(data)
         return data
     else:
         print(f"Request failed with status code {response.status_code}")
@@ -262,3 +269,22 @@ with open('backend/fullAccount.txt','w') as f: #write formatted output to txt fi
     f.write('\n\n')
     f.write("Account ID: " + all_accounts_final['account1final']['account_id'])
     f.write(all_accounts_final['account1final']['formatted_transactions'])
+
+#--------------------------------------------------------------------------------------------------------------
+#all of the transaction data is now stored in fullAccount.txt (for one account, at least for now...)
+# now it's time to send this formatted data off to ChatGPT and receive some sound financial advice!
+#--------------------------------------------------------------------------------------------------------------
+with open('chatGPT/prompts/promptV1.txt', 'r', encoding="utf8") as file:
+    prompt = file.read().rstrip('\n') #store big character prompt in string
+
+content = [ {"role": "system", "content": prompt} ] 
+
+with open('backend/fullAccount.txt','r',encoding='utf8') as file: #load the formatted transaction data into prompt
+    prompt = file.read().rstrip('\n')
+
+if prompt: 
+    content.append( {"role": "user", "content": prompt}, ) #pass the prompt to chatgpt
+    chat = openai.ChatCompletion.create( model="gpt-3.5-turbo-16k", messages=content) 
+reply = chat.choices[0].message.content 
+print(f"ChatGPT: {reply}") 
+content.append({"role": "system", "content": reply}) 

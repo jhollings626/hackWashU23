@@ -27,6 +27,7 @@
     "mongodb": "^6.1.0",
     "next": "^13.4.2",
     "next-auth": "^4.23.2",
+    "openai": "^4.12.1",
     "plotly.js": "^2.26.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",

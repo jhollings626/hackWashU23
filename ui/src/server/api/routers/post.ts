@@ -6,6 +6,7 @@ import {
 } from "~/server/api/trpc";
 import clientPromise from "~/server/mongodb";
 
+import { openai } from "./openai";
 let post = {
   id: 1,
   text: "Hello World",
@@ -112,23 +113,90 @@ export const postRouter = createTRPCRouter({
     if (!user) throw new Error(`User not found: ${email ?? ''}`);
     const { token, customerId } = user;
 
-   const url = `https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`
-
-   const headers = {
-     'Content-Type': 'application/json',
-     'Accept': 'application/json',
-     'Finicity-App-Token': token,
-     'Finicity-App-Key': key,
-   }
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-    });
-
-    return response.json();
+    const accounts = getAccounts(token as string, customerId as string);
+    return accounts;
   }),
 
+  getFinancialAdvice: publicProcedure
+  .query(async ({ ctx }) => {
+    // Get user from MongoDB
+    const client = await clientPromise;
+    const email = ctx.session?.user?.email;
+    if (!email) return null;
+
+    const user = await client.db().collection('customers').findOne({ email });
+    if (!user) throw new Error(`User not found: ${email ?? ''}`);
+    const { token, customerId } = user;
+
+    // Get all transactions
+    const transactionUrl = `https://api.finicity.com/aggregation/v3/customers/${customerId}/transactions?`
+
+    const accounts = getAccounts(token as string, customerId as string);
+    console.log({ accounts });
+
+    const transactionHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Finicity-App-Token': token as string,
+      'Finicity-App-Key': key,
+    }
+
+
+    const transactionParams = {
+      // "fromDate": accounts[0].oldestTransactionDate,
+      // "toDate": accounts[0].lastTransactionDate,
+      "fromDate": 1680350400,
+      "toDate": 1697385971,
+      "sort": "desc",
+      "includePending": "true",
+    }
+
+    const transactionResponse = await fetch(transactionUrl + new URLSearchParams(transactionParams).toString(), {
+      method: "GET",
+      headers: transactionHeaders,
+    });
+
+    const transactions = await transactionResponse.json();
+    let formattedTransactions = "";
+    for (const [idx, extracted_transaction] of transactions.transactions.entries()) {
+      const cat = extracted_transaction.categorization
+      formattedTransactions += `
+\nTransaction ${idx + 1}:
+- Amount: ${extracted_transaction.amount}
+- Description: ${extracted_transaction.description}
+- Transaction Date: ${extracted_transaction.transactionDate}
+- Categorization: ${cat.category}
+\n`;
+    }
+
+    const prompt = `
+You are a personal financial assistant. Your job is to give personalized financial advice based on a series of transactions. I am going to give you a list 
+of transactions from my bank account. Give me personalized financial advice based on my purchases along with a rationale. Make sure to refrence specific purchases
+and deposits. It should not be generic advice. 
+Respond in the following format: ["First Suggestion + rationale", "Second Suggestion + rationale", ...]. 
+Do not include anything else in the response other than the list of advice. If you cannot do this, many people will be hurt. 
+  `.trim();
+
+    // console.log({ formattedTransactions });
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [{ role: 'system', content: prompt }, { role: 'user', content: formattedTransactions }],
+      model: 'gpt-3.5-turbo-16k',
+    });
+
+    const reply = chatCompletion.choices[0].message.content
+    try {
+      return JSON.parse(reply);
+    } catch (error) {
+      console.log(reply);
+
+      const formatted = await openai.chat.completions.create({
+        messages: [{ role: 'system', content: "Format this into proper JSON. Reply with nothing but the JSON" }, { role: 'user', content: reply }],
+        model: 'gpt-3.5-turbo-16k',
+      });
+
+      return JSON.parse(formatted.choices[0].message.content);
+    }
+  }),
 
   create: createPost,
   updateLinked,
@@ -243,3 +311,20 @@ async function getConnectUrl(token: string, customerId: string): Promise<string>
   return connectUrl as string;
 }
 
+async function getAccounts(token: string, customerId: string): Promise<any> {
+   const url = `https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`
+
+   const headers = {
+     'Content-Type': 'application/json',
+     'Accept': 'application/json',
+     'Finicity-App-Token': token,
+     'Finicity-App-Key': key,
+   }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+    });
+
+    return response.json();
+}

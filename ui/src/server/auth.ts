@@ -8,9 +8,9 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "./mongodb"
 
 if (!process.env.DISCORD_CLIENT_ID) {
-  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_ID" '${process.env.DISCORD_CLIENT_ID}'`)
+  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_ID"`)
 } else if (!process.env.DISCORD_CLIENT_SECRET) {
-  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_SECRET" '${process.env.DISCORD_CLIENT_SECRET}'`)
+  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_SECRET"`)
 }
 
 /**

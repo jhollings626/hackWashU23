@@ -7,12 +7,18 @@ import styles from "./page.module.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import BankAccountsOverview from "~/app/bankaccounts";
+import LinkBankAccounts from "~/app/linkbankaccounts";
 import ExpenseGraph from "~/app/expensegraph";
 import Link from "next/link";
 
 export default async function Home() {
   const session = await getServerAuthSession();
   console.log({ session });
+
+  const customerInt = Math.floor(Math.random() * 1000000000);
+  const username = `customer${customerInt}_2023-10-15`;
+  const customerData = await api.post.getCustomerData.query({ username });
+  console.log(customerData)
 
   return (
     <div className="snap-y snap-mandatory h-screen w-screen overflow-scroll">
@@ -44,6 +50,7 @@ export default async function Home() {
            )}
          </div>
       </section>
+      <LinkBankAccounts />
       <BankAccountsOverview />
       <section className={twMerge("snap-start flex w-screen h-screen", styles.background)}>
          <div className="w-11/12 h-full mx-auto flex flex-col items-center justify-center">

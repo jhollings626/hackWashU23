@@ -144,7 +144,6 @@ def getAllCustomerTransactions(API_key, customer_id, token, fromDate, toDate):
         'toDate': toDate,
         'includePending': 'true',
         'sort': 'desc',
-        'limit': '25'
     }
     
     response = requests.get(url, headers=headers, params=params)
@@ -179,9 +178,7 @@ balances = [account['balance'] for account in accounts_data['accounts']]
 oldestTransactions = [account['oldestTransactionDate'] for account in accounts_data['accounts']]
 lastTransactions = [account['lastTransactionDate'] for account in accounts_data['accounts']]
 
-# Assuming getAllCustomerTransactions is a function that retrieves all transactions for a customer
-
-accounts_info = [
+accounts_info = [ #craete accounts_info, list of dictionaries for each account's important data
     {
         'account_id': account['id'],
         'account_name': account['name'],
@@ -192,11 +189,19 @@ accounts_info = [
     for account in accounts_data['accounts']
 ]
 
-# Initialize a dictionary to store transactions for all accounts
-all_accounts_transactions = {}
+numAccounts = len(accounts_info) #set to the number of accounts imported
+#print(accounts_info[1])
+#print(accounts_info[1]['oldest_transaction'])
+#-------------------------------------------------------------------------
+#at this point all of the relevant data has been retrieved to begin querying data,
+#so now it's time to begin extracting actual data from the user's account!
+#-------------------------------------------------------------------------------
+
+# Initialize a dictionary to store final data for all accounts
+all_accounts_final = {}
 
 # Iterate through all accounts in accounts_info
-for account_info in accounts_info:
+for i, account_info in enumerate(accounts_info):
     # Retrieve transactions data for the current account
     transactions_data = getAllCustomerTransactions(
         API_KEY,
@@ -223,15 +228,37 @@ for account_info in accounts_info:
         for transaction in transactions_data['transactions']
     ]
     
-    # Add extracted transactions to the dictionary using account_id as the key
-    all_accounts_transactions[account_info['account_id']] = extracted_transactions
-    
-    # Displaying extracted transaction information
-    print(f"\nTransactions for Account ID: {account_info['account_id']}")
+    # Format and store transactions data as a string
+    formatted_transactions = ""
     for idx, extracted_transaction in enumerate(extracted_transactions, start=1):
-        print(f"  Transaction {idx}:")
-        print(f"    Amount: {extracted_transaction['amount']}")
-        print(f"    Description: {extracted_transaction['description']}")
-        print(f"    Transaction Date: {extracted_transaction['transaction_date']}")
-        print(f"    Categorization: {extracted_transaction['categorization']}")
-        print(f"    Investment Transaction Type: {extracted_transaction['investment_transaction_type']}\n")
+        formatted_transactions += (
+            f"\n  Transaction {idx}:\n"
+            f"    Amount: {extracted_transaction['amount']}\n"
+            f"    Description: {extracted_transaction['description']}\n"
+            f"    Transaction Date: {extracted_transaction['transaction_date']}\n"
+            f"    Categorization: {extracted_transaction['categorization']}\n"
+            f"    Investment Transaction Type: {extracted_transaction['investment_transaction_type']}\n"
+        )
+    
+    # Create a final dictionary for the current account
+    account_final = {
+        'account_id': account_info['account_id'],
+        'account_name': account_info['account_name'],
+        'balance': account_info['balance'],
+        'formatted_transactions': formatted_transactions  # Add formatted transactions here
+    }
+    
+    # Add the final account dictionary to all_accounts_final using a key like 'account1final', 'account2final', etc.
+    all_accounts_final[f'account{i+1}final'] = account_final
+
+# Example: Accessing stored data
+with open('backend/fullAccount.txt','w') as f: #write formatted output to txt file for chatgpt interpretation
+    f.truncate(0) #reset file from last use
+    f.write("Data for " + str(len(all_accounts_final)) + " accounts collected and stored.")
+    f.write('\n\n')
+    f.write("Transaction History for " + all_accounts_final['account1final']['account_name'] + " account")
+    f.write('\n\n')
+    f.write("Acccount Balance: " + str(all_accounts_final['account1final']['balance']))
+    f.write('\n\n')
+    f.write("Account ID: " + all_accounts_final['account1final']['account_id'])
+    f.write(all_accounts_final['account1final']['formatted_transactions'])

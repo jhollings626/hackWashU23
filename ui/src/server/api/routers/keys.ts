@@ -1,5 +1,5 @@
-const key = "344fcb27caa92be8e7b7c26b5d230022"
-const id = "2445584332755"
-const secret = "Hh4x0opoX0xfvN4oJ15y"
+const key = "9fefb39982a74d9369518cdb3edf0171"
+const id = "2445584332782"
+const secret = "1ZesT1vQtV0C6rxNVXv9"
 
 export { key, id, secret }

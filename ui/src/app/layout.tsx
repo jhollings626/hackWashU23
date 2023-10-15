@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Hack WashU 23",
+  title: "Brock Finance",
   description: "TODO",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

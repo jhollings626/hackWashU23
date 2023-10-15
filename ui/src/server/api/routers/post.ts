@@ -117,6 +117,34 @@ export const postRouter = createTRPCRouter({
     return accounts;
   }),
 
+  getSavings: publicProcedure
+  .query(async ({ ctx }) => {
+    // Get user from MongoDB
+    const client = await clientPromise;
+    const email = ctx.session?.user?.email;
+    if (!email) return null;
+
+    const user = await client.db().collection('customers').findOne({ email });
+    if (!user) throw new Error(`User not found: ${email ?? ''}`);
+    const { token, customerId } = user;
+
+    // Get all transactions
+    const transactions = await getTransactions(token as string, customerId as string);
+    let totalIncome = 0;
+    let totalSpending = 0;
+
+    for (const transaction of transactions.transactions) {
+      if (transaction.categorization.category.toLowerCase().includes("paycheck")) {
+        const amount = transaction.amount;
+        totalIncome += amount;
+      } else {
+        totalSpending += transaction.amount;
+      }
+    }
+
+    return { totalIncome, totalSpending };
+  }),
+
   getFinancialAdvice: publicProcedure
   .query(async ({ ctx }) => {
     // Get user from MongoDB
@@ -129,34 +157,7 @@ export const postRouter = createTRPCRouter({
     const { token, customerId } = user;
 
     // Get all transactions
-    const transactionUrl = `https://api.finicity.com/aggregation/v3/customers/${customerId}/transactions?`
-
-    const accounts = getAccounts(token as string, customerId as string);
-    console.log({ accounts });
-
-    const transactionHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Finicity-App-Token': token as string,
-      'Finicity-App-Key': key,
-    }
-
-
-    const transactionParams = {
-      // "fromDate": accounts[0].oldestTransactionDate,
-      // "toDate": accounts[0].lastTransactionDate,
-      "fromDate": 1680350400,
-      "toDate": 1697385971,
-      "sort": "desc",
-      "includePending": "true",
-    }
-
-    const transactionResponse = await fetch(transactionUrl + new URLSearchParams(transactionParams).toString(), {
-      method: "GET",
-      headers: transactionHeaders,
-    });
-
-    const transactions = await transactionResponse.json();
+    const transactions = await getTransactions(token as string, customerId as string);
     let formattedTransactions = "";
     for (const [idx, extracted_transaction] of transactions.transactions.entries()) {
       const cat = extracted_transaction.categorization
@@ -327,4 +328,35 @@ async function getAccounts(token: string, customerId: string): Promise<any> {
     });
 
     return response.json();
+}
+
+async function getTransactions(token: string, customerId: string): Promise<any> {
+    const transactionUrl = `https://api.finicity.com/aggregation/v3/customers/${customerId}/transactions?`
+
+    const accounts = getAccounts(token as string, customerId as string);
+    console.log({ accounts });
+
+    const transactionHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Finicity-App-Token': token as string,
+      'Finicity-App-Key': key,
+    }
+
+    const transactionParams = {
+      // "fromDate": accounts[0].oldestTransactionDate,
+      // "toDate": accounts[0].lastTransactionDate,
+      "fromDate": 1680350400,
+      "toDate": 1697385971,
+      "sort": "desc",
+      "includePending": "true",
+    }
+
+    const transactionResponse = await fetch(transactionUrl + new URLSearchParams(transactionParams).toString(), {
+      method: "GET",
+      headers: transactionHeaders,
+    });
+
+    const transactions = await transactionResponse.json();
+    return transactions;
 }

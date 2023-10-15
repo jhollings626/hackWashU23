@@ -12,6 +12,7 @@ import Savings from "./savings";
 import FinancialAdvice from "./financialadvice";
 import ExpenseGraph from "~/app/expensegraph";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function Home() {
   const session = await getServerAuthSession();
@@ -29,11 +30,18 @@ export default async function Home() {
          <div className="w-11/12 h-full mx-auto flex flex-col items-center justify-center">
            <div className="z-10 mt-auto">
              <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] text-white">
-               Hack WashU 23
+               Brock
              </h1>
              <h2 className="text-3xl mt-2 font-extrabold tracking-tight sm:text-[3rem] text-white">
-               Your finance made as easy as your TK
+               Personal finance reimagined.
              </h2>
+        <Image
+          src="/brock.png"
+          alt="Financial Advice"
+          className="mx-auto mt-8"
+          width={500}
+          height={500}
+        />
            </div>
            {!!session ? (
              <div className="text-center mt-auto pb-10 relative w-full">
@@ -58,6 +66,25 @@ export default async function Home() {
       <Savings />
       {/* <ExpenseGraph /> */}
       <FinancialAdvice />
+      <section className={twMerge("snap-start flex w-screen h-screen", styles.background)}>
+         <div className="w-11/12 h-full mx-auto flex flex-col items-center justify-center">
+           <div className="z-10 mt-auto">
+             <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] text-white">
+               That's all!
+             </h1>
+             <h2 className="text-3xl mt-2 font-extrabold tracking-tight sm:text-[3rem] text-white">
+               Brock wishes you luck in your financial endeavors
+             </h2>
+        <Image
+          src="/brock-wave.png"
+          alt="Financial Advice"
+          className="mx-auto mt-8 mb-20"
+          width={500}
+          height={500}
+        />
+           </div>
+         </div>
+      </section>
     </div>
   );
 

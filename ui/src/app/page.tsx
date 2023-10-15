@@ -18,6 +18,7 @@ export default async function Home() {
   const customerInt = Math.floor(Math.random() * 1000000000);
   const username = `customer${customerInt}_2023-10-15`;
   const customerData = await api.post.getCustomerData.query({ username });
+  const updateLinkedCallback = async () => api.post.updateLinked.mutate({ linked: true });
   console.log(customerData)
 
   return (
@@ -50,7 +51,7 @@ export default async function Home() {
            )}
          </div>
       </section>
-      <LinkBankAccounts />
+      <LinkBankAccounts customerData={customerData} /*updateLinkedCallback={updateLinkedCallback} */ />
       <BankAccountsOverview />
       <section className={twMerge("snap-start flex w-screen h-screen", styles.background)}>
          <div className="w-11/12 h-full mx-auto flex flex-col items-center justify-center">

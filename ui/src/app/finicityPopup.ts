@@ -31,14 +31,13 @@ export class ConnectComponent {
     }
   };
 
-  constructor() {
-    (async () => {
-      console.log(await getToken(partnerId, partnerSecret, API_KEY))
-    })();
-    // FinicityConnect.launch(
-    //   'CONNECT_URL',
-    //  this.connectEventHandlers,
-    //  this.connectOptions);
+  constructor(connectUrl: string, onDoneCallback: (event: ConnectDoneEvent) => void) {
+    this.connectEventHandlers.onDone = onDoneCallback;
+    FinicityConnect.launch(
+       connectUrl,
+       this.connectEventHandlers,
+       this.connectOptions
+    );
   }
 }
 

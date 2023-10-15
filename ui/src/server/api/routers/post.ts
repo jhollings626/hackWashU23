@@ -4,6 +4,7 @@ import {
   publicProcedure,
   protectedProcedure,
 } from "~/server/api/trpc";
+import clientPromise from "~/server/mongodb";
 
 let post = {
   id: 1,
@@ -30,6 +31,22 @@ export const createPost = protectedProcedure
     return post;
   });
 
+export const updateLinked = protectedProcedure
+  .input(z.object({ linked: z.boolean() }))
+  .mutation(async ({ ctx, input }) => {
+    const client = await clientPromise;
+    const email = ctx.session?.user?.email;
+    const { linked } = input;
+
+    // Update MongoDB
+    const user = await client.db().collection('customers').findOne({ email });
+    if (!user) throw new Error(`User not found: ${email ?? ''}`);
+
+    await client.db().collection('customers').updateOne({ email }, { $set: { linked } });
+
+    return linked;
+  });
+
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
     .input(z.object({ text: z.string() }))
@@ -41,9 +58,24 @@ export const postRouter = createTRPCRouter({
 
   getCustomerData: publicProcedure
   .input(z.object({ username: z.string() }))
-  .query(async ({ input }) => {
+  .query(async ({ input, ctx }) => {
+    const client = await clientPromise;
     const { username } = input;
+    const email = ctx.session?.user?.email;
+    if (!email) return null;
 
+    // Check if customer already exists in MongoDB
+    console.log("CHECKING IF USER EXISTS")
+    console.log({ email });
+    const user = await client.db().collection('customers').findOne({ email });
+    console.log("USER", { user });
+
+    if (user) {
+      console.log("USER EXISTS")
+      return user;
+    }
+
+    // Otherwise, create a new customer
     console.log("GETTING TOKEN")
     const token = await getToken();
     console.log({ token });
@@ -54,14 +86,52 @@ export const postRouter = createTRPCRouter({
     const connectUrl = await getConnectUrl(token, customerId);
     console.log({ connectUrl });
 
-    return {
+    // Save in MongoDB
+    const data = {
       username,
       customerId,
       connectUrl,
+      token,
+      email,
+      linked: false,
     };
+    await client.db().collection('customers').insertOne(data);
+
+    return data;
   }),
 
+  getAccounts: publicProcedure
+  // .input(z.object({ token: z.string() }))
+  .query(async ({ ctx }) => {
+    // Get user from MongoDB
+    const client = await clientPromise;
+    const email = ctx.session?.user?.email;
+    if (!email) return null;
+
+    const user = await client.db().collection('customers').findOne({ email });
+    if (!user) throw new Error(`User not found: ${email ?? ''}`);
+    const { token, customerId } = user;
+
+   const url = `https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`
+
+   const headers = {
+     'Content-Type': 'application/json',
+     'Accept': 'application/json',
+     'Finicity-App-Token': token,
+     'Finicity-App-Key': key,
+   }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+    });
+
+    return response.json();
+  }),
+
+
   create: createPost,
+  updateLinked,
 
   getLatest: protectedProcedure.query(() => {
     return post;

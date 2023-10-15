@@ -3,23 +3,35 @@ import { twMerge } from "tailwind-merge";
 import { faLock } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import styles from "./page.module.css";
-import Link from "next/link";
-import { useEffect } from "react";
-import { api } from "~/trpc/server";
 import { ConnectComponent } from './finicityPopup';
-// import { trpc } from "
+import { api } from "~/trpc/client";
 
-export default function LinkBankAccounts() {
-  // useEffect(() => {
-  //   new ConnectComponent();
-  // }, []);
-  // const hello = await api.post.hello.query({ text: "from tRPC" });
-  // console.log({ hello });
-  // const test = await api.post.getToken.
-  // console.log(test)
+export interface CustomerData {
+  username: string;
+  customerId: string;
+  connectUrl: string;
+  token: string;
+  email: string;
+  linked: boolean;
+}
+
+export default function LinkBankAccounts({ customerData }: { customerData: CustomerData, updateLinkedCallback: () => Promise<void> }) {
+  const updateLinkedCallback = async () => api.post.updateLinked.mutate({ linked: true });
 
   function openPopup() {
-    new ConnectComponent();
+    new ConnectComponent(
+      customerData.connectUrl,
+      () => {
+        updateLinkedCallback().then(() => {
+          const el = document.getElementById("top-accounts");
+          if (!el) return;
+          el.scrollIntoView({ behavior: "smooth" });
+        }).catch((e) => {
+          console.error(e);
+        }
+        );
+      }
+    );
   }
 
   return (
@@ -34,12 +46,18 @@ export default function LinkBankAccounts() {
           </p>
         </div>
         <div className="z-10 text-center mt-auto pb-20">
-          <button onClick={openPopup}>
-            <span className="rounded-full bg-white text-secondary hover:bg-secondary hover:text-white transition-all duration-200 px-8 py-3">
-              <FontAwesomeIcon icon={faLock} className="mr-2" />
-              Link Your Accounts
-            </span>
-          </button>
+          {!customerData.linked ? (
+            <button onClick={openPopup}>
+              <span className="rounded-full bg-white text-secondary hover:bg-secondary hover:text-white transition-all duration-200 px-8 py-3">
+                <FontAwesomeIcon icon={faLock} className="mr-2" />
+                Link Your Accounts
+              </span>
+            </button>
+          ) : (
+            <p className="text-3xl mt-2 font-extrabold tracking-tight sm:text-[3rem] text-white">
+              Your data is already linked!
+            </p>
+          )}
         </div>
       </div>
     </section>

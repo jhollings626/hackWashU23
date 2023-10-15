@@ -1,0 +1,20 @@
+.background {
+  position: relative;
+}
+
+.background:before {
+  background: linear-gradient(
+    130deg,
+    #FFD166 0%,
+    #EF476F 33%,
+    rgb(98, 0, 234) 90%
+    /* #41D3BD 100% */
+    /* #26547C 100% */
+  );
+  content: "";
+  height: 100%;
+  left: 0;
+  top: 0;
+  position: absolute;
+  width: 100%;
+}

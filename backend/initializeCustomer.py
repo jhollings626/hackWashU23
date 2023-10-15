@@ -130,7 +130,35 @@ def generate_sample_customer(key, id,  secret, url, username):
     print(results_dictionary)
     return results_dictionary
 
-customerInt = (random.randint(50,100) * random.randint(25,100) + random.randint(0,500)) * random.randint(1,20) #randomize customer id generation b/c all have to be unique
+def getAllCustomerTransactions(API_key, customer_id, token, fromDate, toDate):
+    url = f'https://api.finicity.com/aggregation/v3/customers/{customer_id}/transactions'
+
+    headers = {
+        'Finicity-App-Key': API_KEY,
+        'Accept': 'application/json',
+        'Finicity-App-Token': token
+    }
+
+    params = {
+        'fromDate': fromDate,
+        'toDate': toDate,
+        'includePending': 'true',
+        'sort': 'desc',
+        'limit': '25'
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code == 200: #poll HTTP to verify successful request
+        # Request was successful, and you can work with the response here
+        data = response.json()
+        print(data)
+        return data
+    else:
+        print(f"Request failed with status code {response.status_code}")
+        print(response.text)
+
+customerInt = random.randint(10000,999999) #randomize customer id generation b/c all have to be unique
 customer_user = 'customer' + str(customerInt) + "_2023-10-14"
 print("customer ID: " + customer_user)
 
@@ -151,7 +179,9 @@ balances = [account['balance'] for account in accounts_data['accounts']]
 oldestTransactions = [account['oldestTransactionDate'] for account in accounts_data['accounts']]
 lastTransactions = [account['lastTransactionDate'] for account in accounts_data['accounts']]
 
-accounts_info = [ #craete accounts_info, list of dictionaries for each account's important data
+# Assuming getAllCustomerTransactions is a function that retrieves all transactions for a customer
+
+accounts_info = [
     {
         'account_id': account['id'],
         'account_name': account['name'],
@@ -162,35 +192,46 @@ accounts_info = [ #craete accounts_info, list of dictionaries for each account's
     for account in accounts_data['accounts']
 ]
 
-numAccounts = len(accounts_info) #set to the number of accounts imported
-#-------------------------------------------------------------------------
-#at this point all of the relevant data has been retrieved to begin querying data,
-#so now it's time to begin extracting actual data from the user's account!
-#-------------------------------------------------------------------------------
+# Initialize a dictionary to store transactions for all accounts
+all_accounts_transactions = {}
 
-def getAllCustomerTransactions():
-    url = 'https://api.finicity.com/aggregation/v3/customers/{{customerId}}/transactions'
-
-    headers = {
-        'Finicity-App-Key': '{{appKey}}',
-        'Accept': 'application/json',
-        'Finicity-App-Token': '{{appToken}}'
-    }
-
-    params = {
-        'fromDate': '{{fromDate}}',
-        'toDate': '{{toDate}}',
-        'includePending': 'true',
-        'sort': 'desc',
-        'limit': '25'
-    }
+# Iterate through all accounts in accounts_info
+for account_info in accounts_info:
+    # Retrieve transactions data for the current account
+    transactions_data = getAllCustomerTransactions(
+        API_KEY,
+        customer_id,
+        token,
+        account_info['oldest_transaction'],
+        account_info['last_transaction']
+    )
     
-    response = requests.get(url, headers=headers, params=params)
-
-    if response.status_code == 200:
-        # Request was successful, and you can work with the response here
-        data = response.json()
-        print(data)
-    else:
-        print(f"Request failed with status code {response.status_code}")
-        print(response.text)
+    # Extract relevant transaction details
+    extracted_transactions = [
+        {
+            'id': transaction['id'],
+            'amount': transaction['amount'],
+            'account_id': transaction['accountId'],
+            'customer_id': transaction['customerId'],
+            'status': transaction['status'],
+            'description': transaction['description'],
+            'transaction_date': transaction['transactionDate'],
+            'created_date': transaction['createdDate'],
+            'categorization': transaction['categorization'],
+            'investment_transaction_type': transaction.get('investmentTransactionType', None)  # Optional field
+        }
+        for transaction in transactions_data['transactions']
+    ]
+    
+    # Add extracted transactions to the dictionary using account_id as the key
+    all_accounts_transactions[account_info['account_id']] = extracted_transactions
+    
+    # Displaying extracted transaction information
+    print(f"\nTransactions for Account ID: {account_info['account_id']}")
+    for idx, extracted_transaction in enumerate(extracted_transactions, start=1):
+        print(f"  Transaction {idx}:")
+        print(f"    Amount: {extracted_transaction['amount']}")
+        print(f"    Description: {extracted_transaction['description']}")
+        print(f"    Transaction Date: {extracted_transaction['transaction_date']}")
+        print(f"    Categorization: {extracted_transaction['categorization']}")
+        print(f"    Investment Transaction Type: {extracted_transaction['investment_transaction_type']}\n")

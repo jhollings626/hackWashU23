@@ -8,8 +8,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import BankAccountsOverview from "~/app/bankaccounts";
 import ExpenseGraph from "~/app/expensegraph";
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerAuthSession();
+  console.log({ session });
+
   return (
     <div className="snap-y snap-mandatory h-screen w-screen overflow-scroll">
       <section className={twMerge("snap-start flex w-screen h-screen", styles.background)}>
@@ -22,9 +26,22 @@ export default function Home() {
                Your finance made as easy as your TK
              </h2>
            </div>
-           <div className="text-center mt-auto pb-10">
-             <FontAwesomeIcon icon={faArrowDown} size="4x" bounce className="text-white" />
-           </div>
+           {!!session ? (
+             <div className="text-center mt-auto pb-10 relative w-full">
+               <FontAwesomeIcon icon={faArrowDown} size="4x" bounce className="text-white" />
+               <p className="text-sm float-right absolute left-0 tracking-tight text-white">
+                  Signed in as {session.user.name}
+               </p>
+             </div>
+            ) : (
+              <div className="z-10 text-center mt-auto pb-20">
+                <Link href="/api/auth/signin">
+                  <span className="rounded-full bg-white text-secondary hover:bg-secondary hover:text-white transition-all duration-200 px-8 py-3">
+                    Sign in
+                  </span>
+                </Link>
+              </div>
+           )}
          </div>
       </section>
       <BankAccountsOverview />
@@ -40,7 +57,7 @@ export default function Home() {
            </div>
          </div>
       </section>
-      <ExpenseGraph />
+      {/* <ExpenseGraph /> */}
     </div>
   );
 

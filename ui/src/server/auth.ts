@@ -4,7 +4,14 @@ import {
   type DefaultSession,
 } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { env } from "~/env.mjs";
+import { MongoDBAdapter } from "@auth/mongodb-adapter"
+import clientPromise from "./mongodb"
+
+if (!process.env.DISCORD_CLIENT_ID) {
+  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_ID" '${process.env.DISCORD_CLIENT_ID}'`)
+} else if (!process.env.DISCORD_CLIENT_SECRET) {
+  throw new Error(`Invalid/Missing environment variable: "DISCORD_CLIENT_SECRET" '${process.env.DISCORD_CLIENT_SECRET}'`)
+}
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -33,19 +40,19 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  adapter: MongoDBAdapter(clientPromise),
   callbacks: {
-    session: ({ session, token }) => ({
+    session: ({ session }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.sub,
       },
     }),
   },
   providers: [
     DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
+      clientId: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
     }),
     /**
      * ...add more providers here.

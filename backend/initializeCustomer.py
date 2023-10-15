@@ -2,8 +2,10 @@
 import requests
 import os
 from dotenv import load_dotenv
+from collections import Counter
 import random
 import openai
+import re
 
 load_dotenv("key.env")
 
@@ -16,8 +18,8 @@ print(API_KEY)
 
 
 url = 'https://api.finicity.com/aggregation/v2/partners/authentication'
-partnerId = "2445584332755"
-partnerSecret = "Hh4x0opoX0xfvN4oJ15y"
+partnerId = "2445584332782"
+partnerSecret = "1ZesT1vQtV0C6rxNVXv9"
 
 
 #generate token
@@ -164,8 +166,50 @@ def getAllCustomerTransactions(API_key, customer_id, token, fromDate, toDate):
         print(f"Request failed with status code {response.status_code}")
         print(response.text)
 
+def extractCategorizations(transactions_str):
+    categorizations = re.findall(r"Categorization: (.+?)\n", transactions_str)
+    categorizationsDicts = [eval(c) for c in categorizations]
+    return categorizationsDicts
+
+def extractAmounts(transactions_str):
+    amounts = re.findall(r"Amount: (.+?)\n", transactions_str)
+    amounts = [float(a) for a in amounts]
+    return amounts
+
+def getAccountData(transactions_str):
+    categorizationsDicts = extractCategorizations(transactions_str)
+    amounts = extractAmounts(transactions_str)
+    
+    total_income = 0
+    total_spent = 0
+    payment_names = []
+    
+    for i, categorization in enumerate(categorizationsDicts):
+        # Ensure we don't try to access an index that doesn't exist
+        if i >= len(amounts):
+            break
+        
+        # Check the category and update the totals accordingly
+        if "Paycheck" in categorization['category']:
+            total_income += amounts[i]
+        else:
+            total_spent += amounts[i]
+        
+        # Add the payment name to the list for later finding the most common
+        payment_names.append(categorization['normalizedPayeeName'])
+    
+    # Find the most common payment name
+    most_common_payment = Counter(payment_names).most_common(1)[0][0]
+    
+    return {
+        'total_income': round(total_income),
+        'total_spent': round(total_spent),
+        'most_frequent_payment': most_common_payment
+    }
+
+
 customerInt = random.randint(10000,999999) #randomize customer id generation b/c all have to be unique
-customer_user = 'customer' + str(customerInt) + "_2023-10-14"
+customer_user = 'customer' + str(customerInt) + "_2023-10-15"
 print("customer ID: " + customer_user)
 
 customer_info = generate_sample_customer(API_KEY, partnerId, partnerSecret, url, customer_user)
@@ -269,6 +313,13 @@ with open('backend/fullAccount.txt','w') as f: #write formatted output to txt fi
     f.write('\n\n')
     f.write("Account ID: " + all_accounts_final['account1final']['account_id'])
     f.write(all_accounts_final['account1final']['formatted_transactions'])
+#------------------------------------------------------------------------------
+
+transactions_str = str(all_accounts_final['account1final']['formatted_transactions']) #get big formatted string of all transactinos
+
+accountData = getAccountData(transactions_str)
+print(accountData)
+
 
 #--------------------------------------------------------------------------------------------------------------
 #all of the transaction data is now stored in fullAccount.txt (for one account, at least for now...)
